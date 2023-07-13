@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+from sklearn.manifold import TSNE
 
 # warning avoidance
 import warnings
@@ -189,3 +190,48 @@ def plot_distribution(model):
 
 # Example usage
 plot_distribution(lgcv)
+
+# ---------------------------------------------------------------------------------------------------------
+# TSNE-plot
+# ---------------------------------------------------------------------------------------------------------
+
+tsne_model = TSNE(
+    n_components=2,
+    perplexity=30,
+    learning_rate=100,
+    n_iter=1000,
+    verbose=1,
+    random_state=0,
+    angle=0.75,
+)
+
+X, _ = average_embeddings(
+    w2v_model_1, lemma_df["text_clean"], labeled_lemma_df["text_clean"]
+)
+X = np.array(X)  # convert to array
+
+tsne_features = tsne_model.fit_transform(X)
+tsnef = pd.DataFrame(tsne_features)
+tsnef["topic"] = X.argmax(axis=1)
+tsnef["label"] = lemma_df["label"]
+tsnef.columns = ["TSNE1", "TSNE2", "topic", "label"]
+tsnef.dropna(axis=0, inplace=True)
+
+# Create the scatter plot
+plt.figure(figsize=(15, 10))
+plt.title("T-SNE plot of platforms descriptions")
+
+# Iterate over unique labels
+for label in tsnef["label"].unique():
+    # Filter the data for each label
+    data = tsnef[tsnef["label"] == label]
+    # Plot the data points with the corresponding label color
+    plt.scatter(data["TSNE1"], data["TSNE2"], label=str(label))
+
+# Set x and y axis labels
+plt.xlabel("TSNE1")
+plt.ylabel("TSNE2")
+
+# Show the plot and add legend
+plt.legend()
+plt.show()
